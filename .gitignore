@@ -1,0 +1,6 @@
+*.vscode
+*.pyc
+*.db
+.idea
+venv
+log.txt
