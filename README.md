@@ -10,8 +10,8 @@
 我们的最终目标是构建 POST 请求所需的 Headers 和 Form-Data 这两个对象即可。
 
 ## 构建 Headers
-继续看 Requests Headers 信息，和登录页面的 GET 请求对比发现，这个 POST 的头部多了三个身份验证字段，经测试authorization和X-Xsrftoken这两个是必需的。
-authorization实际是一个固定值，直接复制过来即可；X-Xsrftoken则是防 Xsrf 跨站的 Token 认证，从登录页面的网页源代码里可以找到。
+继续看`Requests Headers`信息，和登录页面的 GET 请求对比发现，这个 POST 的头部多了三个身份验证字段，经测试`authorization`和`X-Xsrftoken`这两个是必需的。
+`authorization`实际是一个固定值，直接复制过来即可；X-Xsrftoken则是防 Xsrf 跨站的 Token 认证，从登录页面的网页源代码里可以找到。
 
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg '注意必须右键查看源代码才能找到')
 
@@ -20,10 +20,10 @@ authorization实际是一个固定值，直接复制过来即可；X-Xsrftoken�
 ## 构建 Form-Data
 从控制台里可以看到提交了很多信息，中间的 -----WebKit 起到分隔的作用，经测试不需要添加也可以。
 
-timestamp 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000
+`timestamp` 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000
 timestamp = str(int(time.time()*1000))
 
-signature 通过 Crtl+Alt+F 搜索找到是在一个 JS 里生成的，是通过 Hmac 算法对几个固定值和时间戳进行加密，那么只需要在 Python 里也模拟一次这个加密即可。
+`signature` 通过 Crtl+Alt+F 搜索找到是在一个 JS 里生成的，是通过 Hmac 算法对几个固定值和时间戳进行加密，那么只需要在 Python 里也模拟一次这个加密即可。
 
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/3.jpg 'Python 内置 Hmac 函数，非常方便')
 ```
@@ -36,7 +36,7 @@ def _get_signature(self, timestamp):
     return ha.hexdigest()
 ```
 
-captcha 验证码，是通过 GET 请求单独的 API 接口返回是否需要验证码（无论是否需要，都要请求一次），如果是 True 则需要再次 PUT 请求获取图片的 base64 编码。
+`captcha`验证码，是通过 GET 请求单独的 API 接口返回是否需要验证码（无论是否需要，都要请求一次），如果是 True 则需要再次 PUT 请求获取图片的 base64 编码。
 
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/4.jpg '将 base64 解码并写成图片文件即可')
 
@@ -81,7 +81,7 @@ def check_login(self):
 ```
 
 ## 完整代码
-https://github.com/zkqiang/Zhihu-Login
+https://github.com/zkqiang/Zhihu-Login/blob/master/zhihu_login.py
 
 ## 运行环境
 * Python 3
