@@ -11,14 +11,15 @@
 
 ## 构建 Headers
 继续看`Requests Headers`信息，和登录页面的 GET 请求对比发现，这个 POST 的头部多了三个身份验证字段，经测试`authorization`和`X-Xsrftoken`这两个是必需的。
-`authorization`实际是一个固定值，直接复制过来即可；X-Xsrftoken则是防 Xsrf 跨站的 Token 认证，从登录页面的网页源代码里可以找到。
+`authorization`实际是一个固定值，直接复制过来即可；`X-Xsrftoken`则是防 Xsrf 跨站的 Token 认证，在`Response Headers`的`Set-Cookie`字段中可以找到。
 
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg '注意必须右键查看源代码才能找到')
+![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg '注意只有无Cookies请求才能找到')
 
 所以我们需要先请求一次登录页面，然后用正则把这一段匹配出来。
 
 ## 构建 Form-Data
 从控制台里可以看到提交了很多信息，中间的 -----WebKit 起到分隔的作用，经测试不需要添加也可以。
+![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/6.jpg 'Request Payload 信息')
 
 `timestamp` 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000
 timestamp = str(int(time.time()*1000))

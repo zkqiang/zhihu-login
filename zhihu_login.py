@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = 'zkqiang'
-__zhihu__ = '口可口可'
+__zhihu__ = 'https://www.zhihu.com/people/z-kqiang'
 __github__ = 'https://github.com/zkqiang/Zhihu-Login'
 
 import requests
@@ -54,7 +54,11 @@ class ZhihuAccount(object):
         :return: bool
         """
         if load_cookies and self.load_cookies():
-            return True
+            if self.check_login():
+                print('已读取 Cookies 并登录成功')
+                return True
+            else:
+                print('保存的 Cookies 已过期，将重新登录')
 
         headers = self.session.headers.copy()
         headers.update({
@@ -89,9 +93,7 @@ class ZhihuAccount(object):
         """
         try:
             self.session.cookies.load(ignore_discard=True)
-            if self.check_login():
-                print('已读取Cookies，登录成功')
-                return True
+            return True
         except FileNotFoundError:
             print('Cookies.txt 未找到，读取失败')
         return False
@@ -114,7 +116,7 @@ class ZhihuAccount(object):
         :return:
         """
         resp = self.session.get(self.login_url)
-        token = re.findall(r'xsrf&quot;:&quot;(.+?)&quot;', resp.text)[0]
+        token = re.findall(r'_xsrf=([\w|-]+)', resp.headers.get('Set-Cookie'))[0]
         return token
 
     def _get_captcha(self, headers, lang='cn'):
