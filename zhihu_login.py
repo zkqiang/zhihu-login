@@ -29,10 +29,10 @@ FORM_DATA = {
     'client_id': 'c3cef7c66a1843f8b3a9e6a1e3160e20',
     'grant_type': 'password',
     'source': 'com.zhihu.web',
-    # 可将登录手机号和密码填在这里
     'username': '',
     'password': '',
-    'lang': 'cn',
+    # 改为'cn'是倒立汉字验证码
+    'lang': 'en',
     'ref_source': 'homepage'
 }
 
@@ -47,27 +47,27 @@ class ZhihuAccount(object):
         self.session.headers = HEADERS.copy()
         self.session.cookies = cookiejar.LWPCookieJar(filename='./cookies.txt')
 
-    def login(self, load_cookies=True):
+    def login(self, username=None, password=None, load_cookies=True):
         """
         模拟登录知乎
+        :param username: 登录手机号
+        :param password: 登录密码
         :param load_cookies: 是否读取上次保存的 Cookies
         :return: bool
         """
         if load_cookies and self.load_cookies():
             if self.check_login():
-                print('已读取 Cookies 并登录成功')
                 return True
-            else:
-                print('保存的 Cookies 已过期，将重新登录')
 
         headers = self.session.headers.copy()
         headers.update({
             'authorization': 'oauth c3cef7c66a1843f8b3a9e6a1e3160e20',
             'X-Xsrftoken': self._get_token()
         })
+        username, password = self._check_user_pass(username, password)
         self.login_data.update({
-            'username': self._input_data('username', '登录手机'),
-            'password': self._input_data('password', '密码')
+            'username': username,
+            'password': password
         })
         timestamp = str(int(time.time()*1000))
         self.login_data.update({
@@ -77,11 +77,9 @@ class ZhihuAccount(object):
         })
 
         resp = self.session.post(self.login_api, data=self.login_data, headers=headers)
-        print(resp.text)
-        if '验证码' in resp.text:
-            print('验证码错误')
+        if 'error' in resp.text:
+            print(re.findall(r'"message":"(.+?)"', resp.text)[0])
         elif self.check_login():
-            print('登录成功')
             return True
         print('登录失败')
         return False
@@ -95,8 +93,7 @@ class ZhihuAccount(object):
             self.session.cookies.load(ignore_discard=True)
             return True
         except FileNotFoundError:
-            print('Cookies.txt 未找到，读取失败')
-        return False
+            return False
 
     def check_login(self):
         """
@@ -107,6 +104,7 @@ class ZhihuAccount(object):
         resp = self.session.get(self.login_url, allow_redirects=False)
         if resp.status_code == 302:
             self.session.cookies.save()
+            print('登录成功')
             return True
         return False
 
@@ -119,15 +117,15 @@ class ZhihuAccount(object):
         token = re.findall(r'_xsrf=([\w|-]+)', resp.headers.get('Set-Cookie'))[0]
         return token
 
-    def _get_captcha(self, headers, lang='cn'):
+    def _get_captcha(self, headers):
         """
         请求验证码的 API 接口，无论是否需要验证码都需要请求一次
         如果需要验证码会返回图片的 base64 编码
-        可选择两种验证码，需要人工输入
+        根据头部 lang 字段匹配验证码，需要人工输入
         :param headers: 带授权信息的请求头部
-        :param lang: 验证码的种类，中文是选倒立汉字，英文是输入字符
         :return: 验证码的 POST 参数
         """
+        lang = headers.get('lang', 'en')
         if lang == 'cn':
             api = 'https://www.zhihu.com/api/v3/oauth/captcha?lang=cn'
         else:
@@ -169,19 +167,24 @@ class ZhihuAccount(object):
         ha.update(bytes((grant_type + client_id + source + timestamp), 'utf-8'))
         return ha.hexdigest()
 
-    def _input_data(self, key, data_name):
+    def _check_user_pass(self, username, password):
         """
-        用于手动输入指定 form_data 参数
-        :param key: 键名
-        :param data_name: 用于输入提示中文名
-        :return: 输入的值
+        检查用户名和密码是否已输入，若无则手动输入
         """
-        value = self.login_data.get(key)
-        if not value:
-            value = input('请输入{}：'.format(data_name))
-        return value
+        if username is None:
+            username = self.login_data.get('username')
+            if not username:
+                username = input('请输入手机号：')
+        if '+86' not in username:
+            username = '+86' + username
+
+        if password is None:
+            password = self.login_data.get('password')
+            if not password:
+                password = input('请输入密码：')
+        return username, password
 
 
 if __name__ == '__main__':
     account = ZhihuAccount()
-    account.login()
+    account.login(username=None, password=None, load_cookies=True)
