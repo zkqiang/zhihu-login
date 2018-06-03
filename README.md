@@ -24,7 +24,7 @@
 `timestamp` 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000
 timestamp = str(int(time.time()*1000))
 
-`signature` 通过 Crtl+Alt+F 搜索找到是在一个 JS 里生成的，是通过 Hmac 算法对几个固定值和时间戳进行加密，那么只需要在 Python 里也模拟一次这个加密即可。
+`signature` 通过 Crtl+Shift+F 搜索找到是在一个 JS 里生成的，是通过 Hmac 算法对几个固定值和时间戳进行加密，那么只需要在 Python 里也模拟一次这个加密即可。
 
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/3.jpg 'Python 内置 Hmac 函数，非常方便')
 ```
