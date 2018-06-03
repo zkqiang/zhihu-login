@@ -114,7 +114,7 @@ class ZhihuAccount(object):
         :return:
         """
         resp = self.session.get(self.login_url)
-        token = re.findall(r'_xsrf=([\w|-]+)', resp.headers.get('Set-Cookie'))[0]
+        token = resp.cookies['_xsrf']
         return token
 
     def _get_captcha(self, headers):
@@ -132,10 +132,13 @@ class ZhihuAccount(object):
             api = 'https://www.zhihu.com/api/v3/oauth/captcha?lang=en'
         resp = self.session.get(api, headers=headers)
         show_captcha = re.search(r'true', resp.text)
+
         if show_captcha:
             put_resp = self.session.put(api, headers=headers)
-            img_base64 = re.findall(
-                r'"img_base64":"(.+)"', put_resp.text, re.S)[0].replace(r'\n', '')
+            json_data = json.loads(put_resp.text)
+            img_base64 = json_data['img_base64'].replace(r'\n', '')
+            # img_base64 = re.findall(
+            #     r'"img_base64":"(.+)"', put_resp.text, re.S)[0].replace(r'\n', '')
             with open('./captcha.jpg', 'wb') as f:
                 f.write(base64.b64decode(img_base64))
             img = Image.open('./captcha.jpg')
