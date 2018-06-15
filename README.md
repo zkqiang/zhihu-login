@@ -10,7 +10,7 @@
 我们的最终目标是构建 POST 请求所需的 Headers 和 Form-Data 这两个对象即可。
 
 ## 构建 Headers
-继续看`Requests Headers`信息，和登录页面的 GET 请求对比发现，这个 POST 的头部多了三个身份验证字段，经测试`authorization`和`X-Xsrftoken`这两个是必需的。
+继续看`Requests Headers`信息，和登录页面的 GET 请求对比发现，这个 POST 的头部多了三个身份验证字段，经测试`authorization`和`X-Xsrftoken`这两个是必需的 (6月15日更新：目前 POST 已经不需要`authorization`字段)。
 `authorization`实际是一个固定值，直接复制过来即可；`X-Xsrftoken`则是防 Xsrf 跨站的 Token 认证，在`Response Headers`的`Set-Cookie`字段中可以找到。
 
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg '注意只有无Cookies请求才能找到')
@@ -22,7 +22,9 @@
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/6.jpg 'Request Payload 信息')
 
 `timestamp` 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000
+```
 timestamp = str(int(time.time()*1000))
+```
 
 `signature` 通过 Crtl+Shift+F 搜索找到是在一个 JS 里生成的，是通过 Hmac 算法对几个固定值和时间戳进行加密，那么只需要在 Python 里也模拟一次这个加密即可。
 
@@ -46,8 +48,8 @@ resp = self.session.get(api, headers=headers)
 show_captcha = re.search(r'true', resp.text)
 if show_captcha:
     put_resp = self.session.put(api, headers=headers)
-    img_base64 = re.findall(
-        r'"img_base64":"(.+)"', put_resp.text, re.S)[0].replace(r'\n', '')
+    json_data = json.loads(put_resp.text)
+    img_base64 = json_data['img_base64'].replace(r'\n', '')
     with open('./captcha.jpg', 'wb') as f:
         f.write(base64.b64decode(img_base64))
         img = Image.open('./captcha.jpg')
