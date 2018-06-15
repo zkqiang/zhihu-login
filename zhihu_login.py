@@ -71,14 +71,14 @@ class ZhihuAccount(object):
         })
         timestamp = str(int(time.time()*1000))
         self.login_data.update({
-            'captcha': self._get_captcha(headers),
+            'captcha': self._get_captcha(self.login_data['lang'], headers),
             'timestamp': timestamp,
             'signature': self._get_signature(timestamp)
         })
 
         resp = self.session.post(self.login_api, data=self.login_data, headers=headers)
         if 'error' in resp.text:
-            print(re.findall(r'"message":"(.+?)"', resp.text)[0])
+            print(json.loads(resp.text)['error']['message'])
         elif self.check_login():
             return True
         print('登录失败')
@@ -117,15 +117,15 @@ class ZhihuAccount(object):
         token = resp.cookies['_xsrf']
         return token
 
-    def _get_captcha(self, headers):
+    def _get_captcha(self, lang, headers):
         """
         请求验证码的 API 接口，无论是否需要验证码都需要请求一次
         如果需要验证码会返回图片的 base64 编码
-        根据头部 lang 字段匹配验证码，需要人工输入
+        根据 lang 参数匹配验证码，需要人工输入
+        :param lang: 返回验证码的语言(en/cn)
         :param headers: 带授权信息的请求头部
         :return: 验证码的 POST 参数
         """
-        lang = headers.get('lang', 'en')
         if lang == 'cn':
             api = 'https://www.zhihu.com/api/v3/oauth/captcha?lang=cn'
         else:
@@ -137,8 +137,6 @@ class ZhihuAccount(object):
             put_resp = self.session.put(api, headers=headers)
             json_data = json.loads(put_resp.text)
             img_base64 = json_data['img_base64'].replace(r'\n', '')
-            # img_base64 = re.findall(
-            #     r'"img_base64":"(.+)"', put_resp.text, re.S)[0].replace(r'\n', '')
             with open('./captcha.jpg', 'wb') as f:
                 f.write(base64.b64decode(img_base64))
             img = Image.open('./captcha.jpg')
