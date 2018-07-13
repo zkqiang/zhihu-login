@@ -176,7 +176,7 @@ class ZhihuAccount(object):
             username = self.login_data.get('username')
             if not username:
                 username = input('请输入手机号：')
-        if '+86' not in username:
+        if len(username) == 11 and username.isdigit() and '+86' not in username:
             username = '+86' + username
 
         if password is None:
