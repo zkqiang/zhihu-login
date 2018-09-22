@@ -17,24 +17,21 @@ from http import cookiejar
 from PIL import Image
 
 
-FORM_DATA = {
-    'client_id': 'c3cef7c66a1843f8b3a9e6a1e3160e20',
-    'grant_type': 'password',
-    'source': 'com.zhihu.web',
-    'username': '',
-    'password': '',
-    # 改为'cn'是倒立汉字验证码
-    'lang': 'en',
-    'ref_source': 'homepage'
-}
-
-
 class ZhihuAccount(object):
 
-    def __init__(self, ua=None):
+    def __init__(self, captcha_lang='en', ua=None):
         self.login_url = 'https://www.zhihu.com/signup'
         self.login_api = 'https://www.zhihu.com/api/v3/oauth/sign_in'
-        self.login_data = FORM_DATA.copy()
+        self.login_data = {
+            'client_id': 'c3cef7c66a1843f8b3a9e6a1e3160e20',
+            'grant_type': 'password',
+            'source': 'com.zhihu.web',
+            'username': '',
+            'password': '',
+            # 传入'cn'是倒立汉字验证码
+            'lang': captcha_lang,
+            'ref_source': 'homepage'
+        }
         self.session = requests.session()
         self.session.headers = {
             'Connection': 'keep-alive',
@@ -184,5 +181,5 @@ class ZhihuAccount(object):
 
 
 if __name__ == '__main__':
-    account = ZhihuAccount()
+    account = ZhihuAccount(captcha_lang='en')
     account.login(username=None, password=None, load_cookies=True)
