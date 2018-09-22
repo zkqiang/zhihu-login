@@ -16,7 +16,8 @@
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg '注意只有无Cookies请求才能看到')
 
 ## 构建 Form-Data
-Form部分目前已经是加密的，无法再直观看到，下图是之前未加密的时候我截图的，和目前是一样的，有兴趣你可以从js里查找字段。
+Form部分目前已经是加密的，无法再直观看到，下图是之前未加密的时候我截图的，和目前是一样的，有兴趣你可以从js里查找字段。  
+
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/6.jpg 'Request Payload 信息')
 
 `timestamp` 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000
