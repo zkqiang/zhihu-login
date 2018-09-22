@@ -1,5 +1,3 @@
-# 知乎登录POST已改为加密，本代码已失效，暂无解决办法
-
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/0.jpg)
 # Python 最新模拟登录知乎  支持验证码和保存 Cookies
 > 知乎的登录页面已经改版多次，加强了身份验证，网络上大部分模拟登录均已失效，所以我重写了一份完整的，并实现了提交验证码 (包括中文验证码)，本文我对分析过程和代码进行步骤分解，完整的代码请见末尾 Github 仓库，不过还是建议看一遍正文，因为代码早晚会失效，解析思路才是永恒。
@@ -12,15 +10,13 @@
 我们的最终目标是构建 POST 请求所需的 Headers 和 Form-Data 这两个对象即可。
 
 ## 构建 Headers
-继续看`Requests Headers`信息，和登录页面的 GET 请求对比发现，这个 POST 的头部多了三个身份验证字段，经测试`authorization`和`X-Xsrftoken`这两个是必需的 (6月15日更新：目前 POST 已经不需要`authorization`字段)。
-`authorization`实际是一个固定值，直接复制过来即可；`X-Xsrftoken`则是防 Xsrf 跨站的 Token 认证，在`Response Headers`的`Set-Cookie`字段中可以找到。
+继续看`Requests Headers`信息，和登录页面的 GET 请求对比发现，这个 POST 的头部多了三个身份验证字段，经测试`x-xsrftoken`是必需的。
+`x-xsrftoken`则是防 Xsrf 跨站的 Token 认证，访问首页时从`Response Headers`的`Set-Cookie`字段中可以找到。
 
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg '注意只有无Cookies请求才能找到')
-
-所以我们需要先请求一次登录页面，然后用正则把这一段匹配出来。
+![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg '注意只有无Cookies请求才能看到')
 
 ## 构建 Form-Data
-从控制台里可以看到提交了很多信息，中间的 -----WebKit 起到分隔的作用，经测试不需要添加也可以。
+Form部分目前已经是加密的，无法再直观看到，下图是之前未加密的时候我截图的，和目前是一样的，有兴趣你可以从js里查找字段。
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/6.jpg 'Request Payload 信息')
 
 `timestamp` 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000

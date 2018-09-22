@@ -16,15 +16,7 @@ import matplotlib.pyplot as plt
 from http import cookiejar
 from PIL import Image
 
-HEADERS = {
-    'Connection': 'keep-alive',
-    'Host': 'www.zhihu.com',
-    'Referer': 'https://www.zhihu.com/',
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 '
-                  '(KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36'
-    }
-LOGIN_URL = 'https://www.zhihu.com/signup'
-LOGIN_API = 'https://www.zhihu.com/api/v3/oauth/sign_in'
+
 FORM_DATA = {
     'client_id': 'c3cef7c66a1843f8b3a9e6a1e3160e20',
     'grant_type': 'password',
@@ -39,12 +31,18 @@ FORM_DATA = {
 
 class ZhihuAccount(object):
 
-    def __init__(self):
-        self.login_url = LOGIN_URL
-        self.login_api = LOGIN_API
+    def __init__(self, ua=None):
+        self.login_url = 'https://www.zhihu.com/signup'
+        self.login_api = 'https://www.zhihu.com/api/v3/oauth/sign_in'
         self.login_data = FORM_DATA.copy()
         self.session = requests.session()
-        self.session.headers = HEADERS.copy()
+        self.session.headers = {
+            'Connection': 'keep-alive',
+            'Host': 'www.zhihu.com',
+            'Referer': 'https://www.zhihu.com/',
+            'User-Agent': ua or 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 '
+                                '(KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36'
+        }
         self.session.cookies = cookiejar.LWPCookieJar(filename='./cookies.txt')
 
     def login(self, username=None, password=None, load_cookies=True):
@@ -61,8 +59,7 @@ class ZhihuAccount(object):
 
         headers = self.session.headers.copy()
         headers.update({
-            'authorization': 'oauth c3cef7c66a1843f8b3a9e6a1e3160e20',
-            'X-Xsrftoken': self._get_token()
+            'x-xsrftoken': self._get_token(),
         })
         username, password = self._check_user_pass(username, password)
         self.login_data.update({
@@ -113,7 +110,7 @@ class ZhihuAccount(object):
         从登录页面获取 token
         :return:
         """
-        resp = self.session.get(self.login_url)
+        resp = self.session.get('https://www.zhihu.com/')
         token = resp.cookies['_xsrf']
         return token
 
