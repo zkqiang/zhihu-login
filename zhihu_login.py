@@ -19,7 +19,7 @@ from PIL import Image
 
 class ZhihuAccount(object):
 
-    def __init__(self, captcha_lang='en', ua=None):
+    def __init__(self):
         self.login_url = 'https://www.zhihu.com/signup'
         self.login_api = 'https://www.zhihu.com/api/v3/oauth/sign_in'
         self.login_data = {
@@ -29,39 +29,43 @@ class ZhihuAccount(object):
             'username': '',
             'password': '',
             # 传入'cn'是倒立汉字验证码
-            'lang': captcha_lang,
-            'ref_source': 'homepage'
+            'lang': 'en',
+            'ref_source': 'homepage',
         }
         self.session = requests.session()
         self.session.headers = {
-            'Connection': 'keep-alive',
             'Host': 'www.zhihu.com',
             'Referer': 'https://www.zhihu.com/',
-            'User-Agent': ua or 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 '
-                                '(KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                          '(KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36'
         }
         self.session.cookies = cookiejar.LWPCookieJar(filename='./cookies.txt')
 
-    def login(self, username=None, password=None, load_cookies=True):
+    def login(self, username=None, password=None, captcha_lang='en', load_cookies=True):
         """
         模拟登录知乎
         :param username: 登录手机号
         :param password: 登录密码
+        :param captcha_lang: 验证码类型 'en' or 'cn'
         :param load_cookies: 是否读取上次保存的 Cookies
         :return: bool
         """
         if load_cookies and self.load_cookies():
             if self.check_login():
+                print('登录成功')
                 return True
 
         headers = self.session.headers.copy()
         headers.update({
-            'x-xsrftoken': self._get_token(),
+            'xsrftoken': self._get_xsrf(),
+            'x-zse-83': '3_1.1'
         })
+        self.session.headers = headers['x-udid'] = self._get_udid(headers)
         username, password = self._check_user_pass(username, password)
         self.login_data.update({
             'username': username,
-            'password': password
+            'password': password,
+            'captcha_lang': captcha_lang
         })
         timestamp = str(int(time.time()*1000))
         self.login_data.update({
@@ -73,7 +77,8 @@ class ZhihuAccount(object):
         resp = self.session.post(self.login_api, data=self.login_data, headers=headers)
         if 'error' in resp.text:
             print(json.loads(resp.text)['error']['message'])
-        elif self.check_login():
+        if self.check_login():
+            print('登录成功')
             return True
         print('登录失败')
         return False
@@ -98,18 +103,27 @@ class ZhihuAccount(object):
         resp = self.session.get(self.login_url, allow_redirects=False)
         if resp.status_code == 302:
             self.session.cookies.save()
-            print('登录成功')
             return True
         return False
 
-    def _get_token(self):
+    def _get_xsrf(self):
         """
-        从登录页面获取 token
-        :return:
+        从登录页面获取 xsrf
+        :return: str
         """
-        resp = self.session.get('https://www.zhihu.com/')
-        token = resp.cookies['_xsrf']
-        return token
+        resp = self.session.get('https://www.zhihu.com/', allow_redirects=False)
+        xsrf = resp.cookies['_xsrf']
+        return xsrf
+
+    def _get_udid(self, headers):
+        """
+        从uuid接口获得 uuid
+        :param headers: 带授权信息的请求头部
+        :return: str
+        """
+        resp = self.session.post('https://www.zhihu.com/udid', headers=headers)
+        udid = re.search(r'[\w=\-]+', resp.cookies['d_c0'])[0]
+        return udid
 
     def _get_captcha(self, lang, headers):
         """
@@ -181,5 +195,5 @@ class ZhihuAccount(object):
 
 
 if __name__ == '__main__':
-    account = ZhihuAccount(captcha_lang='en')
-    account.login(username=None, password=None, load_cookies=True)
+    account = ZhihuAccount()
+    account.login(username=None, password=None, captcha_lang='en', load_cookies=True)
