@@ -197,4 +197,4 @@ class ZhihuAccount(object):
 
 if __name__ == '__main__':
     account = ZhihuAccount('', '')
-    account.login(captcha_lang='en', load_cookies=False)
+    account.login(captcha_lang='en', load_cookies=True)

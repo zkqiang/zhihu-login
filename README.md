@@ -21,7 +21,9 @@ Form部分目前已经是加密的，无法再直观看到，可以通过在 JS 
 <img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/6.jpg" width=600 align=center alt="打断点的位置">
 <img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/7.jpg" width=600 align=center alt="Request Payload 信息">
 
+然后我们逐个构建上图这些参数：  
 `timestamp` 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000
+
 ```
 timestamp = str(int(time.time()*1000))
 ```
@@ -29,7 +31,8 @@ timestamp = str(int(time.time()*1000))
 `signature` 通过 Ctrl+Shift+F 搜索找到是在一个 JS 里生成的，是通过 Hmac 算法对几个固定值和时间戳进行加密，那么只需要在 Python 里也模拟一次这个加密即可。
 
 <img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/3.jpg" width=600 align=center alt="Python 内置 Hmac 函数，非常方便">
-```
+
+```python
 def _get_signature(self, timestamp):
     ha = hmac.new(b'd1b964811afb40118a12068ff74a12f4', digestmod=hashlib.sha1)
     grant_type = self.login_data['grant_type']
@@ -39,11 +42,11 @@ def _get_signature(self, timestamp):
     return ha.hexdigest()
 ```
 
-`captcha`验证码，是通过 GET 请求单独的 API 接口返回是否需要验证码（无论是否需要，都要请求一次），如果是 True 则需要再次 PUT 请求获取图片的 base64 编码。
-``
+`captcha` 验证码，是通过 GET 请求单独的 API 接口返回是否需要验证码（无论是否需要，都要请求一次），如果是 True 则需要再次 PUT 请求获取图片的 base64 编码。
+
 <img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/4.jpg" width=600 align=center alt="将 base64 解码并写成图片文件即可">
 
-```
+```python
 resp = self.session.get(api, headers=headers)
 show_captcha = re.search(r'true', resp.text)
 if show_captcha:
@@ -56,8 +59,9 @@ if show_captcha:
 ```
 实际上有两个 API，一个是识别倒立汉字，一个是常见的英文验证码，任选其一即可，代码中我将两个都实现了，汉字是通过 plt 点击坐标，然后转为 JSON 格式。（另外，这里其实可以通过重新请求登录页面避开验证码，如果你需要自动登录的话可以改造试试）
 最后还有一点要注意，如果有验证码，需要将验证码的参数先 POST 到验证码 API，再随其他参数一起 POST 到登录 API。
-```
+```python
 if lang == 'cn':
+    import matplotlib.pyplot as plt
     plt.imshow(img)
     print('点击所有倒立的汉字，按回车提交')
     points = plt.ginput(7)
@@ -72,15 +76,36 @@ else:
 ```
 <img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/5.jpg" width=600 align=center alt="和正常登录传递的参数一模一样">
 
+然后把 username 和 password 两个值更新进去，其他字段都保持固定值即可。
+```python
+self.login_data.update({
+    'username': self.username,
+    'password': self.password,
+    'lang': captcha_lang
+})
+
+timestamp = int(time.time()*1000)
+self.login_data.update({
+    'captcha': self._get_captcha(self.login_data['lang']),
+    'timestamp': timestamp,
+    'signature': self._get_signature(timestamp)
+})
+```
+
 ## 加密 Form-Data
-现在知乎必须传递加密数据进行 POST，所以我们也要进行加密，但由于 JS 是混淆后的代码，想窥视其中加密的实现方式是一件很费精力的事情。  
+但是现在知乎必须先将 Form-Data 加密才能进行 POST 传递，所以我们还要解决加密问题，可由于我们看到的 JS 是混淆后的代码，想窥视其中的加密实现方式是一件很费精力的事情。  
 所以这里我采用了 sergiojune 这位知友通过 `pyexecjs` 调用 JS 进行加密的方式，只需要把混淆代码完整复制过来，稍作修改即可。  
-具体可看他的原文：https://zhuanlan.zhihu.com/p/57375111
+具体可看他的原文：https://zhuanlan.zhihu.com/p/57375111  
+```python
+with open('./encrypt.js') as f:
+    js = execjs.compile(f.read())
+    return js.call('Q', urlencode(form_data))
+```
 这里也感谢他分享了一些坑，不然确实不好解决。
 
 ## 保存 Cookies
 最后实现一个检查登录状态的方法，如果访问登录页面出现跳转，说明已经登录成功，这时将 Cookies 保存起来（这里 session.cookies 初始化为 LWPCookieJar 对象，所以有 save 方法），这样下次登录可以直接读取 Cookies 文件。
-```
+```python
 def check_login(self):
     resp = self.session.get(self.login_url, allow_redirects=False)
     if resp.status_code == 302:
