@@ -1,11 +1,11 @@
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/0.jpg)
+![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/0.jpg)  
 # 2019年最新 Python 模拟登录知乎  支持验证码和保存 Cookies
 > 知乎的登录页面已经改版多次，加强了身份验证，网络上大部分模拟登录均已失效，所以我重写了一份完整的，并实现了提交验证码 (包括中文验证码)，本文我对分析过程和代码进行步骤分解，完整的代码请见末尾 Github 仓库，不过还是建议看一遍正文，因为代码早晚会失效，解析思路才是永恒。
 
 ## 分析 POST 请求
 首先打开控制台正常登录一次，可以很快找到登录的 API 接口，这个就是模拟登录 POST 的链接。
 
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/1.jpg '操作前不要忘记勾选上面的 Preserve log')
+<img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/1.jpg" width=600 align=center alt="操作前不要忘记勾选上面的 Preserve log">
 
 我们的最终目标是构建 POST 请求所需的 Headers 和 Form-Data 这两个对象即可。
 
@@ -13,13 +13,13 @@
 继续看`Requests Headers`信息，和登录页面的 GET 请求对比发现，这个 POST 的头部多了三个身份验证字段，经测试`x-xsrftoken`是必需的。
 `x-xsrftoken`则是防 Xsrf 跨站的 Token 认证，访问首页时从`Response Headers`的`Set-Cookie`字段中可以找到。
 
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg '注意只有无Cookies请求才能看到')
+<img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg" width=600 align=center alt="注意只有无Cookies请求才能看到">
 
 ## 构建 Form-Data
 Form部分目前已经是加密的，无法再直观看到，可以通过在 JS 里打断点的方式（具体这里不再赘述，如不会打断点请自行搜索）。  
 
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/6.jpg '打断点的位置')  
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/7.jpg 'Request Payload 信息')
+<img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/6.jpg" width=600 align=center alt="打断点的位置">
+<img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/7.jpg" width=600 align=center alt="Request Payload 信息">
 
 `timestamp` 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000
 ```
@@ -28,7 +28,7 @@ timestamp = str(int(time.time()*1000))
 
 `signature` 通过 Ctrl+Shift+F 搜索找到是在一个 JS 里生成的，是通过 Hmac 算法对几个固定值和时间戳进行加密，那么只需要在 Python 里也模拟一次这个加密即可。
 
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/3.jpg 'Python 内置 Hmac 函数，非常方便')
+<img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/3.jpg" width=600 align=center alt="Python 内置 Hmac 函数，非常方便">
 ```
 def _get_signature(self, timestamp):
     ha = hmac.new(b'd1b964811afb40118a12068ff74a12f4', digestmod=hashlib.sha1)
@@ -41,7 +41,7 @@ def _get_signature(self, timestamp):
 
 `captcha`验证码，是通过 GET 请求单独的 API 接口返回是否需要验证码（无论是否需要，都要请求一次），如果是 True 则需要再次 PUT 请求获取图片的 base64 编码。
 ``
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/4.jpg '将 base64 解码并写成图片文件即可')
+<img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/4.jpg" width=600 align=center alt="将 base64 解码并写成图片文件即可">
 
 ```
 resp = self.session.get(api, headers=headers)
@@ -70,7 +70,7 @@ else:
     self.session.post(api, data={'input_text': capt}, headers=headers)
     return capt
 ```
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/5.jpg '和正常登录传递的参数一模一样')
+<img src="https://github.com/zkqiang/Zhihu-Login/blob/master/docs/5.jpg" width=600 align=center alt="和正常登录传递的参数一模一样">
 
 ## 加密 Form-Data
 现在知乎必须传递加密数据进行 POST，所以我们也要进行加密，但由于 JS 是混淆后的代码，想窥视其中加密的实现方式是一件很费精力的事情。  
