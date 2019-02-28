@@ -1,5 +1,5 @@
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/0.jpg)
-# Python 最新模拟登录知乎  支持验证码和保存 Cookies
+# 2019年最新 Python 模拟登录知乎  支持验证码和保存 Cookies
 > 知乎的登录页面已经改版多次，加强了身份验证，网络上大部分模拟登录均已失效，所以我重写了一份完整的，并实现了提交验证码 (包括中文验证码)，本文我对分析过程和代码进行步骤分解，完整的代码请见末尾 Github 仓库，不过还是建议看一遍正文，因为代码早晚会失效，解析思路才是永恒。
 
 ## 分析 POST 请求
@@ -16,16 +16,17 @@
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/2.jpg '注意只有无Cookies请求才能看到')
 
 ## 构建 Form-Data
-Form部分目前已经是加密的，无法再直观看到，下图是之前未加密的时候我截图的，和目前是一样的，有兴趣你可以从js里查找字段。  
+Form部分目前已经是加密的，无法再直观看到，可以通过在 JS 里打断点的方式（具体这里不再赘述，如不会打断点请自行搜索）。  
 
-![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/6.jpg 'Request Payload 信息')
+![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/6.jpg '打断点的位置')  
+![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/7.jpg 'Request Payload 信息')
 
 `timestamp` 时间戳，这个很好解决，区别是这里是13位整数，Python 生成的整数部分只有10位，需要额外乘以1000
 ```
 timestamp = str(int(time.time()*1000))
 ```
 
-`signature` 通过 Crtl+Shift+F 搜索找到是在一个 JS 里生成的，是通过 Hmac 算法对几个固定值和时间戳进行加密，那么只需要在 Python 里也模拟一次这个加密即可。
+`signature` 通过 Ctrl+Shift+F 搜索找到是在一个 JS 里生成的，是通过 Hmac 算法对几个固定值和时间戳进行加密，那么只需要在 Python 里也模拟一次这个加密即可。
 
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/3.jpg 'Python 内置 Hmac 函数，非常方便')
 ```
@@ -39,7 +40,7 @@ def _get_signature(self, timestamp):
 ```
 
 `captcha`验证码，是通过 GET 请求单独的 API 接口返回是否需要验证码（无论是否需要，都要请求一次），如果是 True 则需要再次 PUT 请求获取图片的 base64 编码。
-
+``
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/4.jpg '将 base64 解码并写成图片文件即可')
 
 ```
@@ -71,6 +72,12 @@ else:
 ```
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/5.jpg '和正常登录传递的参数一模一样')
 
+## 加密 Form-Data
+现在知乎必须传递加密数据进行 POST，所以我们也要进行加密，但由于 JS 是混淆后的代码，想窥视其中加密的实现方式是一件很费精力的事情。  
+所以这里我采用了 sergiojune 这位知友通过 `pyexecjs` 调用 JS 进行加密的方式，只需要把混淆代码完整复制过来，稍作修改即可。  
+具体可看他的原文：https://zhuanlan.zhihu.com/p/57375111
+这里也感谢他分享了一些坑，不然确实不好解决。
+
 ## 保存 Cookies
 最后实现一个检查登录状态的方法，如果访问登录页面出现跳转，说明已经登录成功，这时将 Cookies 保存起来（这里 session.cookies 初始化为 LWPCookieJar 对象，所以有 save 方法），这样下次登录可以直接读取 Cookies 文件。
 ```
@@ -89,4 +96,9 @@ https://github.com/zkqiang/Zhihu-Login/blob/master/zhihu_login.py
 * Python 3
 * requests
 * matplotlib
-* Pillow
+* pillow
+
+## 微信公众号
+![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/wx.jpg)  
+新开了微信公众号：面向人生编程  
+编程思维不应只存留在代码之中，更应伴随于整个人生旅途，所以公众号里不只聊技术，还会聊产品/互联网/经济学等广泛话题，所以也欢迎非程序员关注。

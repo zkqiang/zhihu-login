@@ -1,8 +1,4 @@
-# zhihu_login.py: 17
-Pillow == 5.0.0
-
-# zhihu_login.py: 15
-matplotlib == 2.1.2
-
-# zhihu_login.py: 8
-requests == 2.18.4
+Pillow >= 5.0.0
+matplotlib >= 2.1.2
+requests >= 2.18.4
+pyexecjs >= 1.5.1
