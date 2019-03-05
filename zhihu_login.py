@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import threading
 
 __author__ = 'zkqiang'
 __zhihu__ = 'https://www.zhihu.com/people/z-kqiang'
@@ -65,7 +66,7 @@ class ZhihuAccount(object):
             'lang': captcha_lang
         })
 
-        timestamp = int(time.time()*1000)
+        timestamp = int(time.time() * 1000)
         self.login_data.update({
             'captcha': self._get_captcha(self.login_data['lang']),
             'timestamp': timestamp,
@@ -152,14 +153,19 @@ class ZhihuAccount(object):
                 print('点击所有倒立的汉字，按回车提交')
                 points = plt.ginput(7)
                 capt = json.dumps({'img_size': [200, 44],
-                                   'input_points': [[i[0]/2, i[1]/2] for i in points]})
+                                   'input_points': [[i[0] / 2, i[1] / 2] for i in points]})
             else:
-                img.show()
+                b_thread = threading.Thread(target=self.show_image, args=(img,))
+                b_thread.start()
                 capt = input('请输入图片里的验证码：')
             # 这里必须先把参数 POST 验证码接口
             self.session.post(api, data={'input_text': capt})
             return capt
         return ''
+
+    @staticmethod
+    def show_image(img):
+        img.show()
 
     def _get_signature(self, timestamp: int or str):
         """
