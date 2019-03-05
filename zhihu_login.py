@@ -185,8 +185,7 @@ class ZhihuAccount(object):
             self.username = '+86' + self.username
 
         if not self.password:
-            if not self.password:
-                self.password = input('请输入密码：')
+            self.password = input('请输入密码：')
 
     @staticmethod
     def _encrypt(form_data: dict):
