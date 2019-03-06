@@ -51,6 +51,8 @@ class ZhihuAccount(object):
         :param captcha_lang: 验证码类型 'en' or 'cn'
         :param load_cookies: 是否读取上次保存的 Cookies
         :return: bool
+        若在 PyCharm 下使用中文验证出现无法点击的问题，
+        需要在 Settings / Tools / Python Scientific / Show Plots in Toolwindow，取消勾选
         """
         if load_cookies and self.load_cookies():
             print('读取 Cookies 文件')
@@ -150,22 +152,18 @@ class ZhihuAccount(object):
             if lang == 'cn':
                 import matplotlib.pyplot as plt
                 plt.imshow(img)
-                print('点击所有倒立的汉字，按回车提交')
+                print('点击所有倒立的汉字，在命令行中按回车提交')
                 points = plt.ginput(7)
                 capt = json.dumps({'img_size': [200, 44],
                                    'input_points': [[i[0] / 2, i[1] / 2] for i in points]})
             else:
-                b_thread = threading.Thread(target=self.show_image, args=(img,))
-                b_thread.start()
+                img_thread = threading.Thread(target=img.show, daemon=True)
+                img_thread.start()
                 capt = input('请输入图片里的验证码：')
             # 这里必须先把参数 POST 验证码接口
             self.session.post(api, data={'input_text': capt})
             return capt
         return ''
-
-    @staticmethod
-    def show_image(img):
-        img.show()
 
     def _get_signature(self, timestamp: int or str):
         """
