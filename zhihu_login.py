@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import threading
 
 __author__ = 'zkqiang'
 __zhihu__ = 'https://www.zhihu.com/people/z-kqiang'
@@ -10,6 +9,7 @@ import hashlib
 import hmac
 import json
 import re
+import threading
 import time
 from http import cookiejar
 from urllib.parse import urlencode
@@ -20,6 +20,10 @@ from PIL import Image
 
 
 class ZhihuAccount(object):
+    """
+    使用时请确定安装了 Node.js（7.0 以上版本） 或其他 JS 环境
+    报错 execjs._exceptions.ProgramError: TypeError: 'exports' 就是没有安装
+    """
 
     def __init__(self, username: str = None, password: str = None):
         self.username = username
@@ -159,6 +163,7 @@ class ZhihuAccount(object):
             else:
                 img_thread = threading.Thread(target=img.show, daemon=True)
                 img_thread.start()
+                # 这里可自行集成验证码识别模块
                 capt = input('请输入图片里的验证码：')
             # 这里必须先把参数 POST 验证码接口
             self.session.post(api, data={'input_text': capt})

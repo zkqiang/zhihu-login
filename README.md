@@ -1,5 +1,5 @@
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/0.jpg)  
-# 2019年最新 Python 模拟登录知乎  支持验证码和保存 Cookies
+# 2020 年最新 Python 模拟登录知乎 支持验证码和 Cookies
 > 知乎的登录页面已经改版多次，加强了身份验证，网络上大部分模拟登录均已失效，所以我重写了一份完整的，并实现了提交验证码 (包括中文验证码)，本文我对分析过程和代码进行步骤分解，完整的代码请见末尾 Github 仓库，不过还是建议看一遍正文，因为代码早晚会失效，解析思路才是永恒。
 
 ## 分析 POST 请求
@@ -122,8 +122,7 @@ https://github.com/zkqiang/Zhihu-Login/blob/master/zhihu_login.py
 * requests
 * matplotlib
 * pillow
+* Node.js
 
 ## 微信公众号
 ![pic](https://github.com/zkqiang/Zhihu-Login/blob/master/docs/wx.jpg)  
-新开了微信公众号：面向人生编程  
-编程思维不应只存留在代码之中，更应伴随于整个人生旅途，所以公众号里不只聊技术，还会聊产品/互联网/经济学等广泛话题，所以也欢迎非程序员关注。
