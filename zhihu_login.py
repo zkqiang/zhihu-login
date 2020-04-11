@@ -23,6 +23,8 @@ class ZhihuAccount(object):
     """
     使用时请确定安装了 Node.js（7.0 以上版本） 或其他 JS 环境
     报错 execjs._exceptions.ProgramError: TypeError: 'exports' 就是没有安装
+
+    然后在当前目录下执行: `$npm install jsdom`
     """
 
     def __init__(self, username: str = None, password: str = None):
@@ -36,7 +38,7 @@ class ZhihuAccount(object):
             'username': '',
             'password': '',
             'lang': 'en',
-            'ref_source': 'homepage',
+            'ref_source': 'other_https://www.zhihu.com/signin?next=%2F',
             'utm_source': ''
         }
         self.session = requests.session()
@@ -82,7 +84,7 @@ class ZhihuAccount(object):
         headers = self.session.headers.copy()
         headers.update({
             'content-type': 'application/x-www-form-urlencoded',
-            'x-zse-83': '3_1.1',
+            'x-zse-83': '3_2.0',
             'x-xsrftoken': self._get_xsrf()
         })
         data = self._encrypt(self.login_data)
@@ -200,7 +202,7 @@ class ZhihuAccount(object):
     def _encrypt(form_data: dict):
         with open('./encrypt.js') as f:
             js = execjs.compile(f.read())
-            return js.call('Q', urlencode(form_data))
+            return js.call('b', urlencode(form_data))
 
 
 if __name__ == '__main__':
